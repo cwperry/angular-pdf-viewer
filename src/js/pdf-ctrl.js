@@ -23,24 +23,31 @@ angular.module('pdf')
     var scale = $attrs.scale ? $attrs.scale : 1;
     var canvas = $element.find('canvas')[0];
     var ctx = canvas.getContext('2d');
+    var rendering = false;
 
     var renderPage = function(num) {
-      if (!angular.isNumber(num))
-        num = parseInt(num);
-      pdfDoc
-        .getPage(num)
-        .then(function(page) {
-          var viewport = page.getViewport(scale);
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
+      if (!rendering) {
+        if (!angular.isNumber(num)) {
+          num = parseInt(num);
+        }
+        pdfDoc
+                .getPage(num)
+                .then(function(page) {
+                  rendering = true;
+                  var viewport = page.getViewport(scale);
+                  canvas.height = viewport.height;
+                  canvas.width = viewport.width;
 
-          var renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-          };
+                  var renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                  };
 
-          page.render(renderContext);
-        });
+                  page.render(renderContext).then(function() {
+                    rendering = false;
+                  });
+                });
+      }
     };
 
     var transform = function() {
